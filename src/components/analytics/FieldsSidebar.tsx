@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useDashboard } from '@/contexts/DashboardContext';
@@ -23,13 +23,6 @@ export function FieldsSidebar({ className }: FieldsSidebarProps) {
       field.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [fields, searchTerm]);
-
-  // Log empty fields for debugging
-  useEffect(() => {
-    if (fields.length === 0) {
-      console.log("Fields array is empty in FieldsSidebar");
-    }
-  }, [fields]);
 
   return (
     <div className={className}>
