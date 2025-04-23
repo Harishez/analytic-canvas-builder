@@ -5,7 +5,7 @@
 
 // Parse the custom properties string from the data
 export function parseCustomProperties(data: any[]): any[] {
-  console.log("Parsing custom properties from data:", data);
+  console.log("Parsing custom properties from data array with length:", data.length);
   
   return data.map(item => {
     try {
@@ -15,14 +15,29 @@ export function parseCustomProperties(data: any[]): any[] {
         return item;
       }
       
-      console.log("Custom properties string:", item.customproperties);
+      console.log("Processing customproperties string:", item.customproperties);
       
       // Extract the custom properties from the string and parse as JSON
       let customProps;
       try {
-        // Make sure to replace single quotes with double quotes for valid JSON
-        customProps = JSON.parse(item.customproperties.replace(/'/g, '"'));
+        const customPropsStr = item.customproperties.replace(/'/g, '"');
+        customProps = JSON.parse(customPropsStr);
         console.log("Successfully parsed customproperties JSON:", customProps);
+        
+        // Convert string values to appropriate types if needed
+        Object.keys(customProps).forEach(key => {
+          const value = customProps[key];
+          if (typeof value === 'string') {
+            // Try to convert to number or boolean if appropriate
+            if (value === 'true') {
+              customProps[key] = true;
+            } else if (value === 'false') {
+              customProps[key] = false;
+            } else if (!isNaN(Number(value))) {
+              customProps[key] = Number(value);
+            }
+          }
+        });
       } catch (parseError) {
         console.error("Error parsing JSON:", parseError);
         console.log("Failed to parse:", item.customproperties);

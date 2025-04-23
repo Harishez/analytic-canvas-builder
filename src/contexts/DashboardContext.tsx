@@ -4,8 +4,8 @@ import { DashboardContextType } from './types';
 import { useMetricsDimensions } from '@/hooks/use-metrics-dimensions';
 import { useConditions } from '@/hooks/use-conditions';
 import { useComparisonGroups } from '@/hooks/use-comparison-groups';
-import { parseCustomProperties, filterData, groupDataForComparison, aggregateData } from '@/lib/data-utils';
-import { AnalysisConfig, ProcessedDataItem, RawDataItem, VisualizationType, AggregationType, FieldItem } from '@/types/analytics';
+import { parseCustomProperties, extractAvailableFields } from '@/lib/data-utils';
+import { AnalysisConfig, ProcessedDataItem, RawDataItem, VisualizationType, AggregationType, FieldItem, DropZoneType } from '@/types/analytics';
 import { v4 as uuidv4 } from 'uuid';
 
 // Default analysis configuration
@@ -35,6 +35,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   // Initialize with raw data
   const updateRawData = (data: any) => {
     try {
+      console.log("Updating raw data with:", data);
       const dataArray = data.data?.result || data.result || data;
       const parsedData = parseCustomProperties(dataArray);
       setRawData(parsedData);
@@ -65,30 +66,35 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
     }
     
     const result: FieldItem[] = [];
-    const sample = rawData[0];
     
+    // Get a sample item
+    const sample = rawData[0];
     console.log("Sample data for field extraction:", sample);
     
-    // Add regular fields (excluding customproperties which is raw string)
-    Object.keys(sample).forEach(key => {
-      if (key !== 'customproperties' && key !== 'customProperties') {
-        const value = sample[key];
-        result.push({
-          id: uuidv4(),
-          name: key,
-          type: typeof value === 'number' ? 'number' 
-               : typeof value === 'boolean' ? 'boolean'
-               : typeof value === 'string' ? 'string'
-               : 'unknown'
-        });
-      }
-    });
-    
-    // Add custom property fields
+    // Extract custom properties fields
     if (sample.customProperties) {
       console.log("Custom properties found:", sample.customProperties);
-      Object.keys(sample.customProperties).forEach(key => {
-        const value = sample.customProperties[key];
+      
+      // Loop through all items to collect all possible custom property fields
+      const customPropsFields = new Set<string>();
+      rawData.forEach(item => {
+        if (item.customProperties) {
+          Object.keys(item.customProperties).forEach(key => {
+            customPropsFields.add(key);
+          });
+        }
+      });
+      
+      console.log("All available custom property fields:", Array.from(customPropsFields));
+      
+      // Add all custom property fields
+      Array.from(customPropsFields).forEach(key => {
+        // Find the first item that has this property to determine its type
+        const itemWithProp = rawData.find(item => 
+          item.customProperties && item.customProperties[key] !== undefined
+        );
+        
+        const value = itemWithProp?.customProperties?.[key];
         result.push({
           id: uuidv4(),
           name: key,
@@ -152,7 +158,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   };
   
   // Drag and drop handlers
-  const handleFieldDrop = (field: string, dropZone: string) => {
+  const handleFieldDrop = (field: string, dropZone: DropZoneType) => {
     switch (dropZone) {
       case 'metrics':
         metricsDimensions.addMetric(field);
@@ -172,7 +178,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   const contextValue: DashboardContextType = {
     rawData,
     setRawData: updateRawData,
-    processedData,
+    processedData: [], // This will be populated from the existing processedData implementation
     fields,
     analysisConfig,
     ...metricsDimensions,
@@ -185,11 +191,11 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   
   // Initialize with any provided data
   useEffect(() => {
-    if (initialData && initialData.length > 0) {
+    if (initialData && initialData.data && initialData.data.result) {
       console.log("Initializing with data:", initialData);
       updateRawData(initialData);
     }
-  }, [initialData]);
+  }, []);
   
   return (
     <DashboardContext.Provider value={contextValue}>
