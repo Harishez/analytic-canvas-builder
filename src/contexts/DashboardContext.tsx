@@ -218,12 +218,16 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   };
 
   const updateConditionOperator = (index: number, operator: 'AND' | 'OR') => {
-    setAnalysisConfig(prev => ({
-      ...prev,
-      conditionOperators: prev.conditionOperators.map((op, i) => 
-        i === index ? operator : op
-      )
-    }));
+    console.log(`Updating condition operator at index ${index} to ${operator}`);
+    setAnalysisConfig(prev => {
+      const updatedOperators = [...prev.conditionOperators];
+      updatedOperators[index] = operator;
+      
+      return {
+        ...prev,
+        conditionOperators: updatedOperators
+      };
+    });
   };
   
   // Context value

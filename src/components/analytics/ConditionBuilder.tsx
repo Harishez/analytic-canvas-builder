@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -117,8 +118,12 @@ export function ConditionBuilder({ className }: ConditionBuilderProps) {
                 <div className="flex justify-center py-1">
                   <ToggleGroup
                     type="single"
-                    value={analysisConfig.conditionOperators[index] || 'AND'}
-                    onValueChange={(value) => updateConditionOperator(index, value as 'AND' | 'OR')}
+                    value={analysisConfig.conditionOperators[index]}
+                    onValueChange={(value) => {
+                      if (value) { // Ensure value is not empty
+                        updateConditionOperator(index, value as 'AND' | 'OR');
+                      }
+                    }}
                     size="sm"
                   >
                     <ToggleGroupItem value="AND">AND</ToggleGroupItem>
