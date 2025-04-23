@@ -99,3 +99,31 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .analytics-shadow {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .chart-container {
+    min-height: 300px;
+  }
+
+  .card-gradient {
+    background: linear-gradient(to right bottom, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.3));
+    backdrop-filter: blur(10px);
+  }
+
+  .draggable-item {
+    cursor: grab;
+    transition: all 0.2s ease;
+  }
+  
+  .draggable-item:active {
+    cursor: grabbing;
+  }
+  
+  .draggable-item:hover {
+    transform: translateY(-2px);
+  }
+}
