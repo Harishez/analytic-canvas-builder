@@ -1,10 +1,11 @@
+
 import React, { createContext, useState, useContext, ReactNode, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardContextType } from './types';
 import { useMetricsDimensions } from '@/hooks/use-metrics-dimensions';
 import { useConditions } from '@/hooks/use-conditions';
 import { useComparisonGroups } from '@/hooks/use-comparison-groups';
-import { parseCustomProperties, extractAvailableFields } from '@/lib/data-utils';
+import { parseCustomProperties, extractAvailableFields, filterData, aggregateData } from '@/lib/data-utils';
 import { AnalysisConfig, ProcessedDataItem, RawDataItem, VisualizationType, AggregationType, FieldItem, DropZoneType } from '@/types/analytics';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -36,7 +37,8 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   const updateRawData = (data: any) => {
     try {
       console.log("Updating raw data with:", data);
-      const dataArray = data.data?.result || data.result || data;
+      const dataArray = Array.isArray(data) ? data : 
+                        data?.data?.result || data?.result || [];
       const parsedData = parseCustomProperties(dataArray);
       setRawData(parsedData);
       
@@ -178,7 +180,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   const contextValue: DashboardContextType = {
     rawData,
     setRawData: updateRawData,
-    processedData: [], // This will be populated from the existing processedData implementation
+    processedData,
     fields,
     analysisConfig,
     ...metricsDimensions,
@@ -191,11 +193,11 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   
   // Initialize with any provided data
   useEffect(() => {
-    if (initialData && initialData.data && initialData.data.result) {
+    if (initialData && initialData.length > 0) {
       console.log("Initializing with data:", initialData);
       updateRawData(initialData);
     }
-  }, []);
+  }, [initialData]);
   
   return (
     <DashboardContext.Provider value={contextValue}>

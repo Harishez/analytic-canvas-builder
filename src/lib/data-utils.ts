@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for data manipulation in the analytics dashboard
  */
@@ -128,6 +127,64 @@ export function filterData(
   });
 }
 
+// Aggregate data for visualization
+export function aggregateData(
+  data: any[], 
+  metrics: string[], 
+  dimensions: string[]
+): any[] {
+  const result: any[] = [];
+  
+  // Group data by dimensions
+  const groupedData: Record<string, any[]> = {};
+  
+  data.forEach(item => {
+    // Create a key based on dimensions
+    const key = dimensions.map(dim => {
+      const value = item.customProperties?.[dim] ?? item[dim];
+      return `${dim}:${value}`;
+    }).join('|');
+    
+    if (!groupedData[key]) {
+      groupedData[key] = [];
+    }
+    
+    groupedData[key].push(item);
+  });
+  
+  // Aggregate metrics for each dimension group
+  Object.entries(groupedData).forEach(([key, items]) => {
+    const resultItem: Record<string, any> = {};
+    
+    // Add dimension values
+    key.split('|').forEach(dimValue => {
+      const [dim, value] = dimValue.split(':');
+      resultItem[dim] = isNaN(Number(value)) ? value : Number(value);
+    });
+    
+    // Aggregate metrics
+    metrics.forEach(metric => {
+      // Extract values for this metric
+      const values = items.map(item => 
+        item.customProperties?.[metric] ?? item[metric]
+      ).filter(value => value !== undefined && value !== null);
+      
+      // Calculate aggregations
+      resultItem[`${metric}_sum`] = values.reduce((sum, val) => sum + Number(val), 0);
+      resultItem[`${metric}_avg`] = values.length > 0 
+        ? resultItem[`${metric}_sum`] / values.length 
+        : 0;
+      resultItem[`${metric}_min`] = Math.min(...values);
+      resultItem[`${metric}_max`] = Math.max(...values);
+      resultItem[`${metric}_count`] = values.length;
+    });
+    
+    result.push(resultItem);
+  });
+  
+  return result;
+}
+
 // Group data for comparisons
 export function groupDataForComparison(
   data: any[],
@@ -191,64 +248,6 @@ export function getOperatorLabel(operator: string): string {
   };
   
   return operatorMap[operator] || operator;
-}
-
-// Aggregate data for visualization
-export function aggregateData(
-  data: any[], 
-  metrics: string[], 
-  dimensions: string[]
-): any[] {
-  const result: any[] = [];
-  
-  // Group data by dimensions
-  const groupedData: Record<string, any[]> = {};
-  
-  data.forEach(item => {
-    // Create a key based on dimensions
-    const key = dimensions.map(dim => {
-      const value = item.customProperties?.[dim] ?? item[dim];
-      return `${dim}:${value}`;
-    }).join('|');
-    
-    if (!groupedData[key]) {
-      groupedData[key] = [];
-    }
-    
-    groupedData[key].push(item);
-  });
-  
-  // Aggregate metrics for each dimension group
-  Object.entries(groupedData).forEach(([key, items]) => {
-    const resultItem: Record<string, any> = {};
-    
-    // Add dimension values
-    key.split('|').forEach(dimValue => {
-      const [dim, value] = dimValue.split(':');
-      resultItem[dim] = isNaN(Number(value)) ? value : Number(value);
-    });
-    
-    // Aggregate metrics
-    metrics.forEach(metric => {
-      // Extract values for this metric
-      const values = items.map(item => 
-        item.customProperties?.[metric] ?? item[metric]
-      ).filter(value => value !== undefined && value !== null);
-      
-      // Calculate aggregations
-      resultItem[`${metric}_sum`] = values.reduce((sum, val) => sum + Number(val), 0);
-      resultItem[`${metric}_avg`] = values.length > 0 
-        ? resultItem[`${metric}_sum`] / values.length 
-        : 0;
-      resultItem[`${metric}_min`] = Math.min(...values);
-      resultItem[`${metric}_max`] = Math.max(...values);
-      resultItem[`${metric}_count`] = values.length;
-    });
-    
-    result.push(resultItem);
-  });
-  
-  return result;
 }
 
 // Generate colors for charts
