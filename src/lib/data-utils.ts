@@ -20,24 +20,27 @@ export function parseCustomProperties(data: any[]): any[] {
       // Extract the custom properties from the string and parse as JSON
       let customProps;
       try {
+        // Make sure to replace single quotes with double quotes for valid JSON
         customProps = JSON.parse(item.customproperties.replace(/'/g, '"'));
+        console.log("Successfully parsed customproperties JSON:", customProps);
       } catch (parseError) {
         console.error("Error parsing JSON:", parseError);
         console.log("Failed to parse:", item.customproperties);
         customProps = {};
       }
       
-      console.log("Parsed custom properties:", customProps);
-      
       // Return a new object with the parsed custom properties and the original data
       return {
         ...item,
         customProperties: customProps,
-        isPriceListApplied: customProps.isPriceListApplied,
-        itemsInCart: customProps.itemsInCart,
-        isOfferApplied: customProps.isOfferApplied,
-        inventoryCount: customProps.inventoryCount,
-        time: customProps.time
+        // Also add top-level properties for easier access
+        ...Object.entries(customProps).reduce((acc, [key, value]) => {
+          // Skip if the property already exists in the original item
+          if (!(key in item)) {
+            acc[key] = value;
+          }
+          return acc;
+        }, {} as Record<string, any>)
       };
     } catch (error) {
       console.error("Error parsing custom properties:", error);

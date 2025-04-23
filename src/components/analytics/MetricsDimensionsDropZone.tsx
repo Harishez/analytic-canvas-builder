@@ -4,6 +4,7 @@ import { useDashboard } from '@/contexts/DashboardContext';
 import { DropZone } from './DropZone';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
+import { DropZoneType } from '@/types/analytics';
 
 export function MetricsDimensionsDropZone() {
   const { 

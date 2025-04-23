@@ -121,9 +121,9 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
     
     console.log("Sample data for field extraction:", sample);
     
-    // Add regular fields
+    // Add regular fields (excluding customproperties which is raw string)
     Object.keys(sample).forEach(key => {
-      if (key !== 'customProperties' && key !== 'customproperties') {
+      if (key !== 'customproperties' && key !== 'customProperties') {
         const value = sample[key];
         result.push({
           id: uuidv4(),
@@ -152,7 +152,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
         });
       });
     } else {
-      console.log("No custom properties found in the data");
+      console.log("No customProperties object found in the sample data");
     }
     
     console.log("Extracted fields:", result);

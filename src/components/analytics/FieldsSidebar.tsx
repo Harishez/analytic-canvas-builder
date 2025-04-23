@@ -13,6 +13,8 @@ export function FieldsSidebar({ className }: FieldsSidebarProps) {
   const { fields } = useDashboard();
   const [searchTerm, setSearchTerm] = useState('');
 
+  console.log("Available fields in sidebar:", fields);
+
   // Group fields by category
   const fieldCategories = React.useMemo(() => {
     const categories: Record<string, typeof fields> = {
@@ -28,6 +30,7 @@ export function FieldsSidebar({ className }: FieldsSidebarProps) {
       }
     });
 
+    console.log("Categorized fields:", categories);
     return categories;
   }, [fields]);
 
@@ -72,9 +75,15 @@ export function FieldsSidebar({ className }: FieldsSidebarProps) {
               {category}
             </h3>
             <div className="space-y-2">
-              {categoryFields.map((field) => (
-                <DraggableField key={field.id} field={field} />
-              ))}
+              {categoryFields.length > 0 ? (
+                categoryFields.map((field) => (
+                  <DraggableField key={field.id} field={field} />
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  No fields in this category
+                </p>
+              )}
             </div>
           </div>
         ))}
