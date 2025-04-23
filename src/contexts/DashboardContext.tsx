@@ -1,63 +1,12 @@
-
 import React, { createContext, useState, useContext, ReactNode, useMemo, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { 
-  FilterCondition, 
-  ComparisonGroup, 
-  FieldItem, 
-  AnalysisConfig,
-  VisualizationType,
-  AggregationType,
-  RawDataItem,
-  ProcessedDataItem
-} from '@/types/analytics';
-import { 
-  parseCustomProperties, 
-  filterData, 
-  groupDataForComparison, 
-  aggregateData 
-} from '@/lib/data-utils';
 import { useToast } from '@/hooks/use-toast';
-
-// Context interface
-interface DashboardContextType {
-  // Raw and processed data
-  rawData: RawDataItem[];
-  setRawData: (data: any) => void;
-  processedData: ProcessedDataItem[];
-  
-  // Available fields
-  fields: FieldItem[];
-  
-  // Current analysis configuration
-  analysisConfig: AnalysisConfig;
-  
-  // Methods to update configuration
-  addMetric: (field: string) => void;
-  removeMetric: (field: string) => void;
-  addDimension: (field: string) => void;
-  removeDimension: (field: string) => void;
-  
-  // Filter conditions
-  addCondition: () => void;
-  updateCondition: (id: string, updates: Partial<FilterCondition>) => void;
-  removeCondition: (id: string) => void;
-  
-  // Comparison groups
-  addComparisonGroup: () => void;
-  updateComparisonGroup: (id: string, updates: Partial<ComparisonGroup>) => void;
-  addComparisonCondition: (groupId: string, field: string, value: any) => void;
-  updateComparisonCondition: (groupId: string, index: number, field: string, value: any) => void;
-  removeComparisonCondition: (groupId: string, index: number) => void;
-  removeComparisonGroup: (id: string) => void;
-  
-  // Visualization settings
-  setVisualizationType: (type: VisualizationType) => void;
-  setAggregationType: (type: AggregationType) => void;
-  
-  // Drag and drop handlers
-  handleFieldDrop: (field: string, dropZone: string) => void;
-}
+import { DashboardContextType } from './types';
+import { useMetricsDimensions } from '@/hooks/use-metrics-dimensions';
+import { useConditions } from '@/hooks/use-conditions';
+import { useComparisonGroups } from '@/hooks/use-comparison-groups';
+import { parseCustomProperties, filterData, groupDataForComparison, aggregateData } from '@/lib/data-utils';
+import { AnalysisConfig, ProcessedDataItem, RawDataItem, VisualizationType, AggregationType, FieldItem } from '@/types/analytics';
+import { v4 as uuidv4 } from 'uuid';
 
 // Default analysis configuration
 const defaultAnalysisConfig: AnalysisConfig = {
@@ -74,24 +23,24 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 
 // Provider component
 export function DashboardProvider({ children, initialData = [] }: { children: ReactNode, initialData?: any[] }) {
-  // State for raw and processed data
   const [rawData, setRawData] = useState<RawDataItem[]>([]);
   const [analysisConfig, setAnalysisConfig] = useState<AnalysisConfig>(defaultAnalysisConfig);
   const { toast } = useToast();
+
+  // Initialize custom hooks
+  const metricsDimensions = useMetricsDimensions(analysisConfig, setAnalysisConfig);
+  const conditions = useConditions(analysisConfig, setAnalysisConfig);
+  const comparisonGroups = useComparisonGroups(analysisConfig, setAnalysisConfig);
   
   // Initialize with raw data
   const updateRawData = (data: any) => {
     try {
-      // Extract data if it has a nested structure
       const dataArray = data.data?.result || data.result || data;
-      
-      // Parse custom properties
       const parsedData = parseCustomProperties(dataArray);
       setRawData(parsedData);
       
       console.log("Raw data updated:", parsedData);
       
-      // Show success message
       toast({
         title: "Data loaded successfully",
         description: `Loaded ${parsedData.length} records`,
@@ -100,7 +49,6 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
       console.error("Error processing raw data:", error);
       setRawData([]);
       
-      // Show error message
       toast({
         title: "Error loading data",
         description: "Failed to process the provided data",
@@ -110,7 +58,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   };
   
   // Detect fields from raw data
-  const fields: FieldItem[] = useMemo(() => {
+  const fields = useMemo(() => {
     if (rawData.length === 0) {
       console.log("No raw data to extract fields from");
       return [];
@@ -160,7 +108,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   }, [rawData]);
   
   // Process data based on current configuration
-  const processedData: ProcessedDataItem[] = useMemo(() => {
+  const processedData = useMemo(() => {
     if (rawData.length === 0) return [];
     
     // Apply conditions
@@ -188,146 +136,6 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
     return filteredData;
   }, [rawData, analysisConfig]);
   
-  // Metrics management
-  const addMetric = (field: string) => {
-    if (!analysisConfig.metrics.includes(field)) {
-      setAnalysisConfig({
-        ...analysisConfig,
-        metrics: [...analysisConfig.metrics, field]
-      });
-      toast({
-        description: `Added ${field} as a metric`,
-      });
-    }
-  };
-  
-  const removeMetric = (field: string) => {
-    setAnalysisConfig({
-      ...analysisConfig,
-      metrics: analysisConfig.metrics.filter(m => m !== field)
-    });
-  };
-  
-  // Dimensions management
-  const addDimension = (field: string) => {
-    if (!analysisConfig.dimensions.includes(field)) {
-      setAnalysisConfig({
-        ...analysisConfig,
-        dimensions: [...analysisConfig.dimensions, field]
-      });
-      toast({
-        description: `Added ${field} as a dimension`,
-      });
-    }
-  };
-  
-  const removeDimension = (field: string) => {
-    setAnalysisConfig({
-      ...analysisConfig,
-      dimensions: analysisConfig.dimensions.filter(d => d !== field)
-    });
-  };
-  
-  // Conditions management
-  const addCondition = () => {
-    const newCondition: FilterCondition = {
-      id: uuidv4(),
-      field: '',
-      operator: 'equals',
-      value: ''
-    };
-    
-    setAnalysisConfig({
-      ...analysisConfig,
-      conditions: [...analysisConfig.conditions, newCondition]
-    });
-  };
-  
-  const updateCondition = (id: string, updates: Partial<FilterCondition>) => {
-    setAnalysisConfig({
-      ...analysisConfig,
-      conditions: analysisConfig.conditions.map(c => 
-        c.id === id ? { ...c, ...updates } : c
-      )
-    });
-  };
-  
-  const removeCondition = (id: string) => {
-    setAnalysisConfig({
-      ...analysisConfig,
-      conditions: analysisConfig.conditions.filter(c => c.id !== id)
-    });
-  };
-  
-  // Comparison groups management
-  const addComparisonGroup = () => {
-    const newGroup: ComparisonGroup = {
-      id: uuidv4(),
-      name: `Group ${analysisConfig.comparisonGroups.length + 1}`,
-      conditions: []
-    };
-    
-    setAnalysisConfig({
-      ...analysisConfig,
-      comparisonGroups: [...analysisConfig.comparisonGroups, newGroup]
-    });
-  };
-  
-  const updateComparisonGroup = (id: string, updates: Partial<ComparisonGroup>) => {
-    setAnalysisConfig({
-      ...analysisConfig,
-      comparisonGroups: analysisConfig.comparisonGroups.map(g => 
-        g.id === id ? { ...g, ...updates } : g
-      )
-    });
-  };
-  
-  const addComparisonCondition = (groupId: string, field: string, value: any) => {
-    setAnalysisConfig({
-      ...analysisConfig,
-      comparisonGroups: analysisConfig.comparisonGroups.map(g => 
-        g.id === groupId 
-          ? { ...g, conditions: [...g.conditions, { field, value }] }
-          : g
-      )
-    });
-  };
-  
-  const updateComparisonCondition = (groupId: string, index: number, field: string, value: any) => {
-    setAnalysisConfig({
-      ...analysisConfig,
-      comparisonGroups: analysisConfig.comparisonGroups.map(g => {
-        if (g.id !== groupId) return g;
-        
-        const updatedConditions = [...g.conditions];
-        updatedConditions[index] = { field, value };
-        
-        return { ...g, conditions: updatedConditions };
-      })
-    });
-  };
-  
-  const removeComparisonCondition = (groupId: string, index: number) => {
-    setAnalysisConfig({
-      ...analysisConfig,
-      comparisonGroups: analysisConfig.comparisonGroups.map(g => {
-        if (g.id !== groupId) return g;
-        
-        const updatedConditions = [...g.conditions];
-        updatedConditions.splice(index, 1);
-        
-        return { ...g, conditions: updatedConditions };
-      })
-    });
-  };
-  
-  const removeComparisonGroup = (id: string) => {
-    setAnalysisConfig({
-      ...analysisConfig,
-      comparisonGroups: analysisConfig.comparisonGroups.filter(g => g.id !== id)
-    });
-  };
-  
   // Visualization settings
   const setVisualizationType = (type: VisualizationType) => {
     setAnalysisConfig({
@@ -347,24 +155,13 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   const handleFieldDrop = (field: string, dropZone: string) => {
     switch (dropZone) {
       case 'metrics':
-        addMetric(field);
+        metricsDimensions.addMetric(field);
         break;
       case 'dimensions':
-        addDimension(field);
+        metricsDimensions.addDimension(field);
         break;
       case 'conditions':
-        // Add a new condition with this field
-        const newCondition: FilterCondition = {
-          id: uuidv4(),
-          field,
-          operator: 'equals',
-          value: ''
-        };
-        
-        setAnalysisConfig({
-          ...analysisConfig,
-          conditions: [...analysisConfig.conditions, newCondition]
-        });
+        conditions.addCondition();
         break;
       default:
         break;
@@ -378,19 +175,9 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
     processedData,
     fields,
     analysisConfig,
-    addMetric,
-    removeMetric,
-    addDimension,
-    removeDimension,
-    addCondition,
-    updateCondition,
-    removeCondition,
-    addComparisonGroup,
-    updateComparisonGroup,
-    addComparisonCondition,
-    updateComparisonCondition,
-    removeComparisonCondition,
-    removeComparisonGroup,
+    ...metricsDimensions,
+    ...conditions,
+    ...comparisonGroups,
     setVisualizationType,
     setAggregationType,
     handleFieldDrop
