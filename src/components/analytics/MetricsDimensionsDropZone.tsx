@@ -1,72 +1,135 @@
 
 import React from 'react';
-import { X } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { DropZone } from './DropZone';
 import { useDashboard } from '@/contexts/DashboardContext';
-import { DropZoneType } from '@/types/analytics';
+import { DropZone } from './DropZone';
+import { cn } from '@/lib/utils';
+import { X } from 'lucide-react';
 
-interface MetricsDimensionsDropZoneProps {
-  className?: string;
-}
-
-export function MetricsDimensionsDropZone({ className }: MetricsDimensionsDropZoneProps) {
+export function MetricsDimensionsDropZone() {
   const { 
     analysisConfig, 
-    handleFieldDrop, 
     removeMetric, 
-    removeDimension 
+    removeDimension,
+    fields 
   } = useDashboard();
   
+  // Find field objects by name
+  const getFieldByName = (name: string) => {
+    return fields.find(field => field.name === name);
+  };
+
   return (
-    <div className={className}>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <DropZone
-          type="metrics"
-          title="Metrics"
-          onDrop={(item) => handleFieldDrop(item.name, 'metrics')}
-          empty={analysisConfig.metrics.length === 0}
-        >
-          <div className="flex flex-wrap gap-2">
-            {analysisConfig.metrics.map((metric) => (
-              <Badge key={metric} variant="secondary" className="group">
-                <span>{metric}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 ml-1 opacity-60 group-hover:opacity-100"
-                  onClick={() => removeMetric(metric)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ))}
-          </div>
-        </DropZone>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="border border-dashed border-gray-300 rounded-md p-4">
+        <h3 className="text-sm font-medium mb-2">Metrics (Values to analyze)</h3>
+        <DropZone 
+          acceptType="FIELD" 
+          dropZoneType="metrics"
+          className="min-h-[100px] mb-4"
+        />
         
-        <DropZone
-          type="dimensions"
-          title="Dimensions"
-          onDrop={(item) => handleFieldDrop(item.name, 'dimensions')}
-          empty={analysisConfig.dimensions.length === 0}
-        >
-          <div className="flex flex-wrap gap-2">
-            {analysisConfig.dimensions.map((dimension) => (
-              <Badge key={dimension} variant="outline" className="group">
-                <span>{dimension}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 ml-1 opacity-60 group-hover:opacity-100"
-                  onClick={() => removeDimension(dimension)}
+        {analysisConfig.metrics.length > 0 ? (
+          <div className="space-y-2">
+            {analysisConfig.metrics.map((metricName) => {
+              const field = getFieldByName(metricName);
+              const type = field?.type || 'unknown';
+              
+              // Determine color based on field type
+              let colorClass = '';
+              switch (type) {
+                case 'number':
+                  colorClass = 'bg-analytics-blue/10 border-analytics-blue/30 text-analytics-blue';
+                  break;
+                case 'string':
+                  colorClass = 'bg-analytics-green/10 border-analytics-green/30 text-analytics-green';
+                  break;
+                case 'boolean':
+                  colorClass = 'bg-analytics-purple/10 border-analytics-purple/30 text-analytics-purple';
+                  break;
+                default:
+                  colorClass = 'bg-analytics-gray/10 border-analytics-gray/30 text-analytics-gray';
+              }
+              
+              return (
+                <div 
+                  key={metricName}
+                  className={cn(
+                    'px-3 py-1.5 rounded-md border flex items-center justify-between',
+                    colorClass
+                  )}
                 >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ))}
+                  <span className="text-sm font-medium">{metricName}</span>
+                  <button 
+                    onClick={() => removeMetric(metricName)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
-        </DropZone>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Drag metrics here to analyze values
+          </p>
+        )}
+      </div>
+      
+      <div className="border border-dashed border-gray-300 rounded-md p-4">
+        <h3 className="text-sm font-medium mb-2">Dimensions (Group by)</h3>
+        <DropZone 
+          acceptType="FIELD" 
+          dropZoneType="dimensions" 
+          className="min-h-[100px] mb-4"
+        />
+        
+        {analysisConfig.dimensions.length > 0 ? (
+          <div className="space-y-2">
+            {analysisConfig.dimensions.map((dimensionName) => {
+              const field = getFieldByName(dimensionName);
+              const type = field?.type || 'unknown';
+              
+              // Determine color based on field type
+              let colorClass = '';
+              switch (type) {
+                case 'number':
+                  colorClass = 'bg-analytics-blue/10 border-analytics-blue/30 text-analytics-blue';
+                  break;
+                case 'string':
+                  colorClass = 'bg-analytics-green/10 border-analytics-green/30 text-analytics-green';
+                  break;
+                case 'boolean':
+                  colorClass = 'bg-analytics-purple/10 border-analytics-purple/30 text-analytics-purple';
+                  break;
+                default:
+                  colorClass = 'bg-analytics-gray/10 border-analytics-gray/30 text-analytics-gray';
+              }
+              
+              return (
+                <div 
+                  key={dimensionName}
+                  className={cn(
+                    'px-3 py-1.5 rounded-md border flex items-center justify-between',
+                    colorClass
+                  )}
+                >
+                  <span className="text-sm font-medium">{dimensionName}</span>
+                  <button 
+                    onClick={() => removeDimension(dimensionName)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Drag dimensions here to group results
+          </p>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 
 import { Dashboard } from '@/components/analytics/Dashboard';
 import { sampleData } from '@/lib/data-utils';
+import { Toaster } from '@/components/ui/toaster';
 
 const Index = () => {
   return (
@@ -23,6 +24,7 @@ const Index = () => {
           Analytics Dashboard - Interactive Data Visualization Tool
         </div>
       </footer>
+      <Toaster />
     </div>
   );
 };

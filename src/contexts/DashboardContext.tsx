@@ -1,5 +1,4 @@
-
-import React, { createContext, useState, useContext, ReactNode, useMemo } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useMemo, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { 
   FilterCondition, 
@@ -17,6 +16,7 @@ import {
   groupDataForComparison, 
   aggregateData 
 } from '@/lib/data-utils';
+import { useToast } from '@/components/ui/use-toast';
 
 // Context interface
 interface DashboardContextType {
@@ -76,6 +76,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   // State for raw and processed data
   const [rawData, setRawData] = useState<RawDataItem[]>([]);
   const [analysisConfig, setAnalysisConfig] = useState<AnalysisConfig>(defaultAnalysisConfig);
+  const { toast } = useToast();
   
   // Initialize with raw data
   const updateRawData = (data: any) => {
@@ -86,9 +87,22 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
       // Parse custom properties
       const parsedData = parseCustomProperties(dataArray);
       setRawData(parsedData);
+      
+      // Show success message
+      toast({
+        title: "Data loaded successfully",
+        description: `Loaded ${parsedData.length} records`,
+      });
     } catch (error) {
       console.error("Error processing raw data:", error);
       setRawData([]);
+      
+      // Show error message
+      toast({
+        title: "Error loading data",
+        description: "Failed to process the provided data",
+        variant: "destructive",
+      });
     }
   };
   
@@ -169,6 +183,9 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
         ...analysisConfig,
         metrics: [...analysisConfig.metrics, field]
       });
+      toast({
+        description: `Added ${field} as a metric`,
+      });
     }
   };
   
@@ -185,6 +202,9 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
       setAnalysisConfig({
         ...analysisConfig,
         dimensions: [...analysisConfig.dimensions, field]
+      });
+      toast({
+        description: `Added ${field} as a dimension`,
       });
     }
   };
@@ -365,7 +385,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   };
   
   // Initialize with any provided data
-  React.useEffect(() => {
+  useEffect(() => {
     if (initialData && initialData.length > 0) {
       updateRawData(initialData);
     }
