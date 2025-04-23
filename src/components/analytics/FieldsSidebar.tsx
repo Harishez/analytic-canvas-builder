@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useDashboard } from '@/contexts/DashboardContext';
@@ -15,18 +15,15 @@ export function FieldsSidebar({ className }: FieldsSidebarProps) {
 
   console.log("Available fields in sidebar:", fields);
 
-  // Group fields by category
+  // Group fields by category - only using Custom Properties as per requirement
   const fieldCategories = React.useMemo(() => {
     const categories: Record<string, typeof fields> = {
       'Custom Properties': [],
-      'Standard Fields': [],
     };
 
     fields.forEach((field) => {
       if (field.category === 'customProperties') {
         categories['Custom Properties'].push(field);
-      } else {
-        categories['Standard Fields'].push(field);
       }
     });
 
@@ -52,6 +49,13 @@ export function FieldsSidebar({ className }: FieldsSidebarProps) {
 
     return result;
   }, [fieldCategories, searchTerm]);
+
+  // Log empty fields for debugging
+  useEffect(() => {
+    if (fields.length === 0) {
+      console.log("Fields array is empty in FieldsSidebar");
+    }
+  }, [fields]);
 
   return (
     <div className={className}>

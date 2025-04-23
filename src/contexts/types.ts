@@ -7,7 +7,8 @@ import {
   VisualizationType,
   AggregationType,
   RawDataItem,
-  ProcessedDataItem
+  ProcessedDataItem,
+  DropZoneType
 } from '@/types/analytics';
 
 export interface DashboardContextType {
@@ -31,5 +32,5 @@ export interface DashboardContextType {
   removeComparisonGroup: (id: string) => void;
   setVisualizationType: (type: VisualizationType) => void;
   setAggregationType: (type: AggregationType) => void;
-  handleFieldDrop: (field: string, dropZone: string) => void;
+  handleFieldDrop: (field: string, dropZone: DropZoneType) => void;
 }
