@@ -1,4 +1,3 @@
-
 import { 
   FilterCondition, 
   ComparisonGroup, 
@@ -33,4 +32,5 @@ export interface DashboardContextType {
   setVisualizationType: (type: VisualizationType) => void;
   setAggregationType: (type: AggregationType) => void;
   handleFieldDrop: (field: string, dropZone: DropZoneType) => void;
+  updateConditionOperator: (index: number, operator: 'AND' | 'OR') => void;
 }

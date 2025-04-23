@@ -46,7 +46,7 @@ export interface AnalysisConfig {
   metrics: string[]; // Fields to analyze/aggregate
   dimensions: string[]; // Fields to group by
   conditions: FilterCondition[]; // Conditions to filter the data
-  conditionOperator: 'AND' | 'OR'; // Operator between conditions
+  conditionOperators: ('AND' | 'OR')[]; // Operators between conditions (length will be conditions.length - 1)
   comparisonGroups: ComparisonGroup[]; // Comparison groups
   visualization: VisualizationType; // Type of visualization
   aggregationType: AggregationType; // Type of aggregation

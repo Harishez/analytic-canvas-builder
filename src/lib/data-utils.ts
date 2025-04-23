@@ -95,41 +95,57 @@ export function extractAvailableFields(data: any[]): string[] {
 export function filterData(
   data: any[], 
   conditions: Array<{field: string; operator: string; value: any}>,
-  conditionOperator: 'AND' | 'OR' = 'AND'
+  operators: ('AND' | 'OR')[]
 ): any[] {
+  if (conditions.length === 0) return data;
+  
   return data.filter(item => {
-    const results = conditions.map(condition => {
-      const { field, operator, value } = condition;
-      const itemValue = item.customProperties?.[field] ?? item[field];
+    // Handle first condition separately
+    let result = evaluateCondition(item, conditions[0]);
+    
+    // Chain remaining conditions with their operators
+    for (let i = 1; i < conditions.length; i++) {
+      const operator = operators[i - 1];
+      const nextResult = evaluateCondition(item, conditions[i]);
       
-      switch (operator) {
-        case 'equals':
-          return itemValue === value;
-        case 'notEquals':
-          return itemValue !== value;
-        case 'greaterThan':
-          return itemValue > value;
-        case 'lessThan':
-          return itemValue < value;
-        case 'greaterOrEqual':
-          return itemValue >= value;
-        case 'lessOrEqual':
-          return itemValue <= value;
-        case 'contains':
-          return String(itemValue).includes(String(value));
-        case 'startsWith':
-          return String(itemValue).startsWith(String(value));
-        case 'endsWith':
-          return String(itemValue).endsWith(String(value));
-        default:
-          return true;
-      }
-    });
-
-    return conditionOperator === 'AND' 
-      ? results.every(result => result)
-      : results.some(result => result);
+      result = operator === 'AND' 
+        ? (result && nextResult)
+        : (result || nextResult);
+    }
+    
+    return result;
   });
+}
+
+function evaluateCondition(
+  item: any, 
+  condition: {field: string; operator: string; value: any}
+): boolean {
+  const { field, operator, value } = condition;
+  const itemValue = item.customProperties?.[field] ?? item[field];
+  
+  switch (operator) {
+    case 'equals':
+      return itemValue === value;
+    case 'notEquals':
+      return itemValue !== value;
+    case 'greaterThan':
+      return itemValue > value;
+    case 'lessThan':
+      return itemValue < value;
+    case 'greaterOrEqual':
+      return itemValue >= value;
+    case 'lessOrEqual':
+      return itemValue <= value;
+    case 'contains':
+      return String(itemValue).includes(String(value));
+    case 'startsWith':
+      return String(itemValue).startsWith(String(value));
+    case 'endsWith':
+      return String(itemValue).endsWith(String(value));
+    default:
+      return true;
+  }
 }
 
 // Aggregate data for visualization

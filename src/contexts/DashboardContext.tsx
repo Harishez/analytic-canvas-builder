@@ -12,8 +12,8 @@ import { v4 as uuidv4 } from 'uuid';
 const defaultAnalysisConfig: AnalysisConfig = {
   metrics: [], 
   dimensions: [], 
-  conditions: [], 
-  conditionOperator: 'AND',
+  conditions: [],
+  conditionOperators: [],
   comparisonGroups: [],
   visualization: 'bar',
   aggregationType: 'sum'
@@ -134,7 +134,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
         operator: c.operator,
         value: c.value
       }));
-      filteredData = filterData(rawData, conditions, analysisConfig.conditionOperator);
+      filteredData = filterData(rawData, conditions, analysisConfig.conditionOperators);
     }
     
     // Apply grouping/aggregation
@@ -189,6 +189,49 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
       conditionOperator: operator
     });
   };
+
+  const addCondition = () => {
+    setAnalysisConfig(prev => ({
+      ...prev,
+      conditions: [...prev.conditions, {
+        id: uuidv4(),
+        field: '',
+        operator: 'equals',
+        value: ''
+      }],
+      conditionOperators: prev.conditions.length > 0 
+        ? [...prev.conditionOperators, 'AND'] 
+        : prev.conditionOperators
+    }));
+  };
+
+  const removeCondition = (id: string) => {
+    setAnalysisConfig(prev => {
+      const index = prev.conditions.findIndex(c => c.id === id);
+      if (index === -1) return prev;
+
+      const newConditions = prev.conditions.filter(c => c.id !== id);
+      const newOperators = [
+        ...prev.conditionOperators.slice(0, index > 0 ? index - 1 : 0),
+        ...prev.conditionOperators.slice(index)
+      ];
+
+      return {
+        ...prev,
+        conditions: newConditions,
+        conditionOperators: newOperators
+      };
+    });
+  };
+
+  const updateConditionOperator = (index: number, operator: 'AND' | 'OR') => {
+    setAnalysisConfig(prev => ({
+      ...prev,
+      conditionOperators: prev.conditionOperators.map((op, i) => 
+        i === index ? operator : op
+      )
+    }));
+  };
   
   // Context value
   const contextValue: DashboardContextType = {
@@ -203,7 +246,8 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
     setVisualizationType,
     setAggregationType,
     handleFieldDrop,
-    setConditionOperator
+    setConditionOperator,
+    updateConditionOperator
   };
   
   // Initialize with any provided data
