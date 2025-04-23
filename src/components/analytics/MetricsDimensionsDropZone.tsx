@@ -10,7 +10,8 @@ export function MetricsDimensionsDropZone() {
     analysisConfig, 
     removeMetric, 
     removeDimension,
-    fields 
+    fields,
+    handleFieldDrop
   } = useDashboard();
   
   // Find field objects by name
@@ -18,14 +19,24 @@ export function MetricsDimensionsDropZone() {
     return fields.find(field => field.name === name);
   };
 
+  // Handlers for field drops
+  const handleMetricDrop = (item: any) => {
+    handleFieldDrop(item.name, 'metrics');
+  };
+
+  const handleDimensionDrop = (item: any) => {
+    handleFieldDrop(item.name, 'dimensions');
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="border border-dashed border-gray-300 rounded-md p-4">
         <h3 className="text-sm font-medium mb-2">Metrics (Values to analyze)</h3>
         <DropZone 
-          type="FIELD" 
-          dropZoneType="metrics"
+          onDrop={handleMetricDrop}
+          type="metrics"
           className="min-h-[100px] mb-4"
+          empty={analysisConfig.metrics.length === 0}
         />
         
         {analysisConfig.metrics.length > 0 ? (
@@ -79,9 +90,10 @@ export function MetricsDimensionsDropZone() {
       <div className="border border-dashed border-gray-300 rounded-md p-4">
         <h3 className="text-sm font-medium mb-2">Dimensions (Group by)</h3>
         <DropZone 
-          type="FIELD" 
-          dropZoneType="dimensions" 
+          onDrop={handleDimensionDrop}
+          type="dimensions"
           className="min-h-[100px] mb-4"
+          empty={analysisConfig.dimensions.length === 0}
         />
         
         {analysisConfig.dimensions.length > 0 ? (
