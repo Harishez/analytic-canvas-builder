@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useMemo, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { 
@@ -16,7 +17,7 @@ import {
   groupDataForComparison, 
   aggregateData 
 } from '@/lib/data-utils';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 // Context interface
 interface DashboardContextType {
@@ -88,6 +89,8 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
       const parsedData = parseCustomProperties(dataArray);
       setRawData(parsedData);
       
+      console.log("Raw data updated:", parsedData);
+      
       // Show success message
       toast({
         title: "Data loaded successfully",
@@ -108,10 +111,15 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   
   // Detect fields from raw data
   const fields: FieldItem[] = useMemo(() => {
-    if (rawData.length === 0) return [];
+    if (rawData.length === 0) {
+      console.log("No raw data to extract fields from");
+      return [];
+    }
     
     const result: FieldItem[] = [];
     const sample = rawData[0];
+    
+    console.log("Sample data for field extraction:", sample);
     
     // Add regular fields
     Object.keys(sample).forEach(key => {
@@ -130,6 +138,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
     
     // Add custom property fields
     if (sample.customProperties) {
+      console.log("Custom properties found:", sample.customProperties);
       Object.keys(sample.customProperties).forEach(key => {
         const value = sample.customProperties[key];
         result.push({
@@ -142,8 +151,11 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
           category: 'customProperties'
         });
       });
+    } else {
+      console.log("No custom properties found in the data");
     }
     
+    console.log("Extracted fields:", result);
     return result;
   }, [rawData]);
   
@@ -387,6 +399,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   // Initialize with any provided data
   useEffect(() => {
     if (initialData && initialData.length > 0) {
+      console.log("Initializing with data:", initialData);
       updateRawData(initialData);
     }
   }, [initialData]);

@@ -5,10 +5,30 @@
 
 // Parse the custom properties string from the data
 export function parseCustomProperties(data: any[]): any[] {
+  console.log("Parsing custom properties from data:", data);
+  
   return data.map(item => {
     try {
+      // Check if the item has customproperties string
+      if (!item.customproperties) {
+        console.log("No customproperties found in item:", item);
+        return item;
+      }
+      
+      console.log("Custom properties string:", item.customproperties);
+      
       // Extract the custom properties from the string and parse as JSON
-      const customProps = JSON.parse(item.customproperties.replace(/'/g, '"'));
+      let customProps;
+      try {
+        customProps = JSON.parse(item.customproperties.replace(/'/g, '"'));
+      } catch (parseError) {
+        console.error("Error parsing JSON:", parseError);
+        console.log("Failed to parse:", item.customproperties);
+        customProps = {};
+      }
+      
+      console.log("Parsed custom properties:", customProps);
+      
       // Return a new object with the parsed custom properties and the original data
       return {
         ...item,

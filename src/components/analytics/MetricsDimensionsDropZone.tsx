@@ -23,7 +23,7 @@ export function MetricsDimensionsDropZone() {
       <div className="border border-dashed border-gray-300 rounded-md p-4">
         <h3 className="text-sm font-medium mb-2">Metrics (Values to analyze)</h3>
         <DropZone 
-          acceptType="FIELD" 
+          type="FIELD" 
           dropZoneType="metrics"
           className="min-h-[100px] mb-4"
         />
@@ -79,7 +79,7 @@ export function MetricsDimensionsDropZone() {
       <div className="border border-dashed border-gray-300 rounded-md p-4">
         <h3 className="text-sm font-medium mb-2">Dimensions (Group by)</h3>
         <DropZone 
-          acceptType="FIELD" 
+          type="FIELD" 
           dropZoneType="dimensions" 
           className="min-h-[100px] mb-4"
         />

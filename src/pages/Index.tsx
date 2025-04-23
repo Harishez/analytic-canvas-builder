@@ -4,6 +4,8 @@ import { sampleData } from '@/lib/data-utils';
 import { Toaster } from '@/components/ui/toaster';
 
 const Index = () => {
+  console.log("Sample data being passed to Dashboard:", sampleData);
+  
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
