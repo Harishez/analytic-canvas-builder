@@ -94,10 +94,11 @@ export function extractAvailableFields(data: any[]): string[] {
 // Filter data based on conditions
 export function filterData(
   data: any[], 
-  conditions: Array<{field: string; operator: string; value: any}>
+  conditions: Array<{field: string; operator: string; value: any}>,
+  conditionOperator: 'AND' | 'OR' = 'AND'
 ): any[] {
   return data.filter(item => {
-    return conditions.every(condition => {
+    const results = conditions.map(condition => {
       const { field, operator, value } = condition;
       const itemValue = item.customProperties?.[field] ?? item[field];
       
@@ -124,6 +125,10 @@ export function filterData(
           return true;
       }
     });
+
+    return conditionOperator === 'AND' 
+      ? results.every(result => result)
+      : results.some(result => result);
   });
 }
 

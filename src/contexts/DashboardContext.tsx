@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardContextType } from './types';
@@ -14,6 +13,7 @@ const defaultAnalysisConfig: AnalysisConfig = {
   metrics: [], 
   dimensions: [], 
   conditions: [], 
+  conditionOperator: 'AND',
   comparisonGroups: [],
   visualization: 'bar',
   aggregationType: 'sum'
@@ -134,7 +134,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
         operator: c.operator,
         value: c.value
       }));
-      filteredData = filterData(rawData, conditions);
+      filteredData = filterData(rawData, conditions, analysisConfig.conditionOperator);
     }
     
     // Apply grouping/aggregation
@@ -182,6 +182,13 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
         break;
     }
   };
+
+  const setConditionOperator = (operator: 'AND' | 'OR') => {
+    setAnalysisConfig({
+      ...analysisConfig,
+      conditionOperator: operator
+    });
+  };
   
   // Context value
   const contextValue: DashboardContextType = {
@@ -195,7 +202,8 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
     ...comparisonGroups,
     setVisualizationType,
     setAggregationType,
-    handleFieldDrop
+    handleFieldDrop,
+    setConditionOperator
   };
   
   // Initialize with any provided data

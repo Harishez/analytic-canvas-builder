@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useDashboard } from '@/contexts/DashboardContext';
 import { FilterCondition, OperatorType } from '@/types/analytics';
 import { getOperatorLabel } from '@/lib/data-utils';
@@ -20,7 +20,8 @@ export function ConditionBuilder({ className }: ConditionBuilderProps) {
     analysisConfig, 
     addCondition, 
     updateCondition, 
-    removeCondition 
+    removeCondition,
+    setAnalysisConfig 
   } = useDashboard();
   
   const operators: { value: OperatorType; label: string }[] = [
@@ -34,6 +35,13 @@ export function ConditionBuilder({ className }: ConditionBuilderProps) {
     { value: 'startsWith', label: 'Starts With' },
     { value: 'endsWith', label: 'Ends With' },
   ];
+
+  const handleOperatorChange = (value: string) => {
+    setAnalysisConfig({
+      ...analysisConfig,
+      conditionOperator: value as 'AND' | 'OR'
+    });
+  };
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -56,6 +64,20 @@ export function ConditionBuilder({ className }: ConditionBuilderProps) {
         </div>
       ) : (
         <div className="space-y-3">
+          {analysisConfig.conditions.length > 1 && (
+            <div className="flex items-center gap-2 py-2">
+              <span className="text-sm text-muted-foreground">Combine conditions with:</span>
+              <ToggleGroup
+                type="single"
+                value={analysisConfig.conditionOperator}
+                onValueChange={handleOperatorChange}
+              >
+                <ToggleGroupItem value="AND" size="sm">AND</ToggleGroupItem>
+                <ToggleGroupItem value="OR" size="sm">OR</ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          )}
+          
           {analysisConfig.conditions.map((condition) => (
             <div 
               key={condition.id} 
