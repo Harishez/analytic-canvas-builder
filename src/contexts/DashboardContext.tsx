@@ -39,6 +39,13 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
       console.log("Updating raw data with:", data);
       const dataArray = Array.isArray(data) ? data : 
                         data?.data?.result || data?.result || [];
+      
+      if (dataArray.length === 0) {
+        console.log("No data found in the provided input");
+        setRawData([]);
+        return;
+      }
+      
       const parsedData = parseCustomProperties(dataArray);
       setRawData(parsedData);
       
@@ -195,6 +202,9 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
   useEffect(() => {
     if (initialData && initialData.length > 0) {
       console.log("Initializing with data:", initialData);
+      updateRawData(initialData);
+    } else if (initialData && Object.keys(initialData).length > 0) {
+      console.log("Initializing with non-array data:", initialData);
       updateRawData(initialData);
     }
   }, [initialData]);
