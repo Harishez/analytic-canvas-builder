@@ -183,13 +183,6 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
     }
   };
 
-  const setConditionOperator = (operator: 'AND' | 'OR') => {
-    setAnalysisConfig({
-      ...analysisConfig,
-      conditionOperator: operator
-    });
-  };
-
   const addCondition = () => {
     setAnalysisConfig(prev => ({
       ...prev,
@@ -246,7 +239,6 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
     setVisualizationType,
     setAggregationType,
     handleFieldDrop,
-    setConditionOperator,
     updateConditionOperator
   };
   
