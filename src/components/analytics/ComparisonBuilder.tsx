@@ -1,6 +1,8 @@
+
 import React from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { 
@@ -28,19 +30,19 @@ export function ComparisonBuilder({ className }: ComparisonBuilderProps) {
     removeComparisonGroup
   } = useDashboard();
   
-  // Function to generate group name based on conditions
-  const generateGroupName = (conditions: { field: string; value: any }[]) => {
-    if (conditions.length === 0) return 'New Group';
-    
-    return conditions
-      .map(c => `${c.field}: ${c.value ? 'True' : 'False'}`)
-      .join(' & ');
+  const [editingName, setEditingName] = React.useState<string | null>(null);
+  const [newName, setNewName] = React.useState<string>('');
+  
+  const handleStartEditName = (groupId: string, currentName: string) => {
+    setEditingName(groupId);
+    setNewName(currentName);
   };
   
-  // Helper to update group name when conditions change
-  const updateGroupNameFromConditions = (groupId: string, conditions: { field: string; value: any }[]) => {
-    const newName = generateGroupName(conditions);
-    updateComparisonGroup(groupId, { name: newName });
+  const handleSaveName = (groupId: string) => {
+    if (newName.trim()) {
+      updateComparisonGroup(groupId, { name: newName });
+    }
+    setEditingName(null);
   };
   
   // Get boolean fields for comparison conditions
@@ -71,9 +73,30 @@ export function ComparisonBuilder({ className }: ComparisonBuilderProps) {
             <Card key={group.id}>
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-base">
-                    {group.name}
-                  </CardTitle>
+                  {editingName === group.id ? (
+                    <div className="flex gap-2 items-center flex-1">
+                      <Input
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        className="h-8"
+                        autoFocus
+                      />
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleSaveName(group.id)}
+                      >
+                        Save
+                      </Button>
+                    </div>
+                  ) : (
+                    <CardTitle 
+                      className="text-base flex gap-2 items-center cursor-pointer"
+                      onClick={() => handleStartEditName(group.id, group.name)}
+                    >
+                      {group.name}
+                      <Edit2 className="h-3 w-3 text-muted-foreground" />
+                    </CardTitle>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -90,17 +113,10 @@ export function ComparisonBuilder({ className }: ComparisonBuilderProps) {
                     <div key={idx} className="flex gap-2 items-center">
                       <Select>
                         <select
-                          value={condition.field || ''}
-                          onChange={(e) => {
-                            const newField = e.target.value;
-                            // Keep the existing value when changing the field
-                            updateComparisonCondition(group.id, idx, newField, condition.value);
-                            
-                            // Update the group name based on the new condition
-                            const updatedConditions = [...group.conditions];
-                            updatedConditions[idx] = { field: newField, value: condition.value };
-                            updateGroupNameFromConditions(group.id, updatedConditions);
-                          }}
+                          value={condition.field}
+                          onChange={(e) => 
+                            updateComparisonCondition(group.id, idx, e.target.value, condition.value)
+                          }
                           className="w-full"
                         >
                           <option value="" disabled>Select field</option>
@@ -115,15 +131,10 @@ export function ComparisonBuilder({ className }: ComparisonBuilderProps) {
                       <div className="flex items-center gap-2">
                         <span className="text-sm">Is</span>
                         <Switch
-                          checked={condition.value || false}
-                          onCheckedChange={(checked) => {
-                            updateComparisonCondition(group.id, idx, condition.field, checked);
-                            
-                            // Update the group name based on the new condition value
-                            const updatedConditions = [...group.conditions];
-                            updatedConditions[idx] = { field: condition.field, value: checked };
-                            updateGroupNameFromConditions(group.id, updatedConditions);
-                          }}
+                          checked={condition.value}
+                          onCheckedChange={(checked) => 
+                            updateComparisonCondition(group.id, idx, condition.field, checked)
+                          }
                         />
                         <span className="text-sm">{condition.value ? 'True' : 'False'}</span>
                       </div>
@@ -132,16 +143,7 @@ export function ComparisonBuilder({ className }: ComparisonBuilderProps) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => {
-                          removeComparisonCondition(group.id, idx);
-                          
-                          // Update the group name after removing the condition
-                          const updatedConditions = [
-                            ...group.conditions.slice(0, idx),
-                            ...group.conditions.slice(idx + 1)
-                          ];
-                          updateGroupNameFromConditions(group.id, updatedConditions);
-                        }}
+                        onClick={() => removeComparisonCondition(group.id, idx)}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -153,10 +155,7 @@ export function ComparisonBuilder({ className }: ComparisonBuilderProps) {
                       variant="outline"
                       size="sm"
                       className="w-full"
-                      onClick={() => {
-                        addComparisonCondition(group.id, '', false);
-                        // Name will be updated when the condition is configured
-                      }}
+                      onClick={() => addComparisonCondition(group.id, '', false)}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Condition
