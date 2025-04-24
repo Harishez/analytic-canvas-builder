@@ -152,7 +152,8 @@ function evaluateCondition(
 export function aggregateData(
   data: any[], 
   metrics: string[], 
-  dimensions: string[]
+  dimensions: string[],
+  aggregationType: string = 'sum'
 ): any[] {
   const result: any[] = [];
   
@@ -186,18 +187,33 @@ export function aggregateData(
     // Aggregate metrics
     metrics.forEach(metric => {
       // Extract values for this metric
-      const values = items.map(item => 
-        item.customProperties?.[metric] ?? item[metric]
-      ).filter(value => value !== undefined && value !== null);
+      const values = items
+        .map(item => Number(item[metric] || item.customProperties?.[metric] || 0))
+        .filter(val => !isNaN(val));
       
-      // Calculate aggregations
-      resultItem[`${metric}_sum`] = values.reduce((sum, val) => sum + Number(val), 0);
-      resultItem[`${metric}_avg`] = values.length > 0 
-        ? resultItem[`${metric}_sum`] / values.length 
-        : 0;
-      resultItem[`${metric}_min`] = Math.min(...values);
-      resultItem[`${metric}_max`] = Math.max(...values);
-      resultItem[`${metric}_count`] = values.length;
+      if (values.length === 0) return;
+      
+      // Apply the specified aggregation type
+      switch (aggregationType) {
+        case 'sum':
+          resultItem[metric] = values.reduce((sum, val) => sum + val, 0);
+          break;
+        case 'average':
+          resultItem[metric] = values.reduce((sum, val) => sum + val, 0) / values.length;
+          break;
+        case 'min':
+          resultItem[metric] = Math.min(...values);
+          break;
+        case 'max':
+          resultItem[metric] = Math.max(...values);
+          break;
+        case 'count':
+          resultItem[metric] = values.length;
+          break;
+        default:
+          // Use sum as default
+          resultItem[metric] = values.reduce((sum, val) => sum + val, 0);
+      }
     });
     
     result.push(resultItem);
@@ -206,50 +222,29 @@ export function aggregateData(
   return result;
 }
 
-// Group data for comparisons
-export function groupDataForComparison(
-  data: any[],
-  groupingConditions: Array<{field: string; value: any}>
+// Process data for comparison groups
+export function processDataForComparison(
+  data: any[], 
+  comparisonGroups: Array<{id: string; name: string; conditions: Array<{field: string; value: any}>}>
 ): Record<string, any[]> {
   const result: Record<string, any[]> = {};
   
-  // Generate all possible condition combinations
-  const conditionLabels: string[] = [];
-  
-  // Function to recursively generate condition combinations
-  function generateConditions(
-    index: number, 
-    currentCondition: Record<string, any>, 
-    currentLabel: string
-  ) {
-    if (index >= groupingConditions.length) {
-      conditionLabels.push(currentLabel.trim());
-      result[currentLabel.trim()] = data.filter(item => {
-        return Object.entries(currentCondition).every(([field, value]) => {
-          return item.customProperties?.[field] === value || item[field] === value;
-        });
+  // Process each comparison group
+  comparisonGroups.forEach(group => {
+    const { name, conditions } = group;
+    
+    // Filter data for this group
+    const filteredData = data.filter(item => {
+      return conditions.every(condition => {
+        const { field, value } = condition;
+        const itemValue = item.customProperties?.[field] ?? item[field];
+        return itemValue === value;
       });
-      return;
-    }
+    });
     
-    const { field, value } = groupingConditions[index];
-    
-    // Condition is true
-    generateConditions(
-      index + 1,
-      { ...currentCondition, [field]: true },
-      `${currentLabel} ${field}=true`
-    );
-    
-    // Condition is false
-    generateConditions(
-      index + 1,
-      { ...currentCondition, [field]: false },
-      `${currentLabel} ${field}=false`
-    );
-  }
-  
-  generateConditions(0, {}, '');
+    // Add the filtered data to the result
+    result[name] = filteredData;
+  });
   
   return result;
 }
@@ -334,38 +329,6 @@ function modifyColor(hex: string, percent: number, lighten: boolean): string {
   
   // Convert back to hex
   return `#${(nr << 16 | ng << 8 | nb).toString(16).padStart(6, '0')}`;
-}
-
-// Process data for the case in the example
-export function processExampleCase(data: any[]): {
-  condition1: any[];
-  condition2: any[];
-  condition3: any[];
-} {
-  const filteredData = data.filter(
-    item => item.inventoryCount > 100 && item.itemsInCart > 10
-  );
-  
-  // Case 1: offer is applied & price list not applied
-  const condition1 = filteredData.filter(
-    item => item.isOfferApplied === true && item.isPriceListApplied === false
-  );
-  
-  // Case 2: Offer is not applied & price list is applied
-  const condition2 = filteredData.filter(
-    item => item.isOfferApplied === false && item.isPriceListApplied === true
-  );
-  
-  // Case 3: both not applied
-  const condition3 = filteredData.filter(
-    item => item.isOfferApplied === false && item.isPriceListApplied === false
-  );
-  
-  return {
-    condition1,
-    condition2,
-    condition3
-  };
 }
 
 // Sample data for initial testing

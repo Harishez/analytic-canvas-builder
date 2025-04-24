@@ -34,7 +34,8 @@ export function VisualizationPanel({ className }: VisualizationPanelProps) {
   const { 
     analysisConfig, 
     setVisualizationType, 
-    setAggregationType 
+    setAggregationType,
+    comparisonData
   } = useDashboard();
   
   const aggregationOptions: { value: AggregationType; label: string }[] = [

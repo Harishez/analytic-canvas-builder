@@ -1,10 +1,11 @@
+
 import React, { createContext, useState, useContext, ReactNode, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardContextType } from './types';
 import { useMetricsDimensions } from '@/hooks/use-metrics-dimensions';
 import { useConditions } from '@/hooks/use-conditions';
 import { useComparisonGroups } from '@/hooks/use-comparison-groups';
-import { parseCustomProperties, extractAvailableFields, filterData, aggregateData } from '@/lib/data-utils';
+import { parseCustomProperties, extractAvailableFields, filterData, aggregateData, processDataForComparison } from '@/lib/data-utils';
 import { AnalysisConfig, ProcessedDataItem, RawDataItem, VisualizationType, AggregationType, FieldItem, DropZoneType } from '@/types/analytics';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -144,12 +145,22 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
       return aggregateData(
         filteredData, 
         analysisConfig.metrics, 
-        analysisConfig.dimensions
+        analysisConfig.dimensions,
+        analysisConfig.aggregationType
       );
     }
     
     return filteredData;
   }, [rawData, analysisConfig]);
+  
+  // Process data for comparison groups
+  const comparisonData = useMemo(() => {
+    if (rawData.length === 0 || analysisConfig.comparisonGroups.length === 0) {
+      return {};
+    }
+    
+    return processDataForComparison(rawData, analysisConfig.comparisonGroups);
+  }, [rawData, analysisConfig.comparisonGroups]);
   
   // Visualization settings
   const setVisualizationType = (type: VisualizationType) => {
@@ -235,6 +246,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
     rawData,
     setRawData: updateRawData,
     processedData,
+    comparisonData,
     fields,
     analysisConfig,
     ...metricsDimensions,

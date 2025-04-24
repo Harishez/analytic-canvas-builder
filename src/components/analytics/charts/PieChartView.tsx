@@ -12,10 +12,22 @@ import { useDashboard } from '@/contexts/DashboardContext';
 import { generateChartColors } from '@/lib/data-utils';
 
 export function PieChartView() {
-  const { processedData, analysisConfig } = useDashboard();
+  const { processedData, analysisConfig, comparisonData } = useDashboard();
   
-  // Format data for the chart (for pie chart, we need a different structure)
+  // Check if we should show comparison groups
+  const showingComparisonGroups = analysisConfig.comparisonGroups.length > 0 && comparisonData && Object.keys(comparisonData).length > 0;
+  
+  // Format data for the chart based on whether we're showing comparison groups
   const chartData = React.useMemo(() => {
+    if (showingComparisonGroups) {
+      return prepareComparisonData();
+    } else {
+      return prepareStandardData();
+    }
+  }, [processedData, comparisonData, analysisConfig]);
+  
+  // Prepare data for standard pie chart
+  function prepareStandardData() {
     if (!processedData.length || !analysisConfig.metrics.length) return [];
     
     // For pie chart, we use the first metric and dimension
@@ -45,7 +57,56 @@ export function PieChartView() {
       name,
       value
     }));
-  }, [processedData, analysisConfig]);
+  }
+  
+  // Prepare data for comparison groups pie chart
+  function prepareComparisonData() {
+    if (!analysisConfig.metrics.length) return [];
+    
+    const metric = analysisConfig.metrics[0];
+    const groupNames = Object.keys(comparisonData);
+    
+    return groupNames.map(groupName => {
+      const groupItems = comparisonData[groupName];
+      
+      // Aggregate data for this group based on selected aggregation type
+      let value = 0;
+      if (groupItems && groupItems.length > 0) {
+        const values = groupItems
+          .map(item => Number(item[metric] || item.customProperties?.[metric] || 0))
+          .filter(val => !isNaN(val));
+          
+        if (values.length > 0) {
+          switch (analysisConfig.aggregationType) {
+            case 'sum':
+              value = values.reduce((sum, val) => sum + val, 0);
+              break;
+            case 'average':
+              value = values.reduce((sum, val) => sum + val, 0) / values.length;
+              break;
+            case 'min':
+              value = Math.min(...values);
+              break;
+            case 'max':
+              value = Math.max(...values);
+              break;
+            case 'count':
+              value = values.length;
+              break;
+            default:
+              // For 'none', we'll just sum the values for pie chart visualization
+              value = values.reduce((sum, val) => sum + val, 0);
+              break;
+          }
+        }
+      }
+      
+      return {
+        name: groupName,
+        value: value
+      };
+    });
+  }
   
   // Generate chart colors
   const colors = generateChartColors(chartData.length);
