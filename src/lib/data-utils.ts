@@ -122,27 +122,52 @@ function evaluateCondition(
   condition: {field: string; operator: string; value: any}
 ): boolean {
   const { field, operator, value } = condition;
+  
+  // Handle empty field or value
+  if (!field || field.trim() === '') return true;
+  
+  // Get the value from the item, looking in customProperties first
   const itemValue = item.customProperties?.[field] ?? item[field];
   
+  // Special case for empty value
+  if (value === '' || value === undefined || value === null) {
+    if (operator === 'equals') {
+      return itemValue === '' || itemValue === undefined || itemValue === null;
+    } else if (operator === 'notEquals') {
+      return !(itemValue === '' || itemValue === undefined || itemValue === null);
+    }
+  }
+  
+  // Handle the case where the item doesn't have this field
+  if (itemValue === undefined) {
+    return operator === 'notEquals'; // Only "not equals" can be true if field doesn't exist
+  }
+  
+  // Convert value to same type as itemValue for comparison if possible
+  const typedValue = typeof itemValue === 'number' ? Number(value) : 
+                    typeof itemValue === 'boolean' ? (value === 'true' || value === true) : 
+                    String(value);
+  
+  // Compare based on operator
   switch (operator) {
     case 'equals':
-      return itemValue === value;
+      return itemValue === typedValue;
     case 'notEquals':
-      return itemValue !== value;
+      return itemValue !== typedValue;
     case 'greaterThan':
-      return itemValue > value;
+      return itemValue > typedValue;
     case 'lessThan':
-      return itemValue < value;
+      return itemValue < typedValue;
     case 'greaterOrEqual':
-      return itemValue >= value;
+      return itemValue >= typedValue;
     case 'lessOrEqual':
-      return itemValue <= value;
+      return itemValue <= typedValue;
     case 'contains':
-      return String(itemValue).includes(String(value));
+      return String(itemValue).toLowerCase().includes(String(typedValue).toLowerCase());
     case 'startsWith':
-      return String(itemValue).startsWith(String(value));
+      return String(itemValue).toLowerCase().startsWith(String(typedValue).toLowerCase());
     case 'endsWith':
-      return String(itemValue).endsWith(String(value));
+      return String(itemValue).toLowerCase().endsWith(String(typedValue).toLowerCase());
     default:
       return true;
   }
@@ -331,20 +356,12 @@ function modifyColor(hex: string, percent: number, lighten: boolean): string {
   return `#${(nr << 16 | ng << 8 | nb).toString(16).padStart(6, '0')}`;
 }
 
-// Sample data for initial testing
+// Sample data for initial testing - simplified to match the request
 export const sampleData = {
   data: {
     result: [
       {
         customproperties: '{"isPriceListApplied":false,"itemsInCart":18,"isOfferApplied":true,"inventoryCount":349,"time":120}',
-        appversion: "3.7.0",
-        userid: 0,
-        deviceid: 2141999127683,
-        platform: "Android",
-        osversion: "10"
-      },
-      {
-        customproperties: '{"isPriceListApplied":false,"itemsInCart":19,"isOfferApplied":true,"inventoryCount":329,"time":145}',
         appversion: "3.7.0",
         userid: 0,
         deviceid: 2141999127683,
@@ -358,46 +375,6 @@ export const sampleData = {
         deviceid: 3141999127555,
         platform: "iOS",
         osversion: "15.1"
-      },
-      {
-        customproperties: '{"isPriceListApplied":true,"itemsInCart":12,"isOfferApplied":false,"inventoryCount":180,"time":110}',
-        appversion: "3.7.1",
-        userid: 2,
-        deviceid: 4141999127444,
-        platform: "Android",
-        osversion: "11"
-      },
-      {
-        customproperties: '{"isPriceListApplied":false,"itemsInCart":8,"isOfferApplied":false,"inventoryCount":420,"time":60}',
-        appversion: "3.7.0",
-        userid: 3,
-        deviceid: 5141999127333,
-        platform: "iOS",
-        osversion: "14.5"
-      },
-      {
-        customproperties: '{"isPriceListApplied":false,"itemsInCart":22,"isOfferApplied":false,"inventoryCount":150,"time":180}',
-        appversion: "3.7.2",
-        userid: 4,
-        deviceid: 6141999127222,
-        platform: "Android",
-        osversion: "12"
-      },
-      {
-        customproperties: '{"isPriceListApplied":true,"itemsInCart":14,"isOfferApplied":true,"inventoryCount":280,"time":130}',
-        appversion: "3.7.1",
-        userid: 5,
-        deviceid: 7141999127111,
-        platform: "iOS",
-        osversion: "15.2"
-      },
-      {
-        customproperties: '{"isPriceListApplied":false,"itemsInCart":17,"isOfferApplied":true,"inventoryCount":310,"time":155}',
-        appversion: "3.7.0",
-        userid: 6,
-        deviceid: 8141999127000,
-        platform: "Android",
-        osversion: "10"
       }
     ]
   },
