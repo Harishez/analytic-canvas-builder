@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -91,14 +90,16 @@ export function ComparisonBuilder({ className }: ComparisonBuilderProps) {
                     <div key={idx} className="flex gap-2 items-center">
                       <Select>
                         <select
-                          value={condition.field}
+                          value={condition.field || ''}
                           onChange={(e) => {
-                            updateComparisonCondition(group.id, idx, e.target.value, condition.value);
-                            updateGroupNameFromConditions(group.id, [
-                              ...group.conditions.slice(0, idx),
-                              { field: e.target.value, value: condition.value },
-                              ...group.conditions.slice(idx + 1)
-                            ]);
+                            const newField = e.target.value;
+                            // Keep the existing value when changing the field
+                            updateComparisonCondition(group.id, idx, newField, condition.value);
+                            
+                            // Update the group name based on the new condition
+                            const updatedConditions = [...group.conditions];
+                            updatedConditions[idx] = { field: newField, value: condition.value };
+                            updateGroupNameFromConditions(group.id, updatedConditions);
                           }}
                           className="w-full"
                         >
@@ -114,14 +115,14 @@ export function ComparisonBuilder({ className }: ComparisonBuilderProps) {
                       <div className="flex items-center gap-2">
                         <span className="text-sm">Is</span>
                         <Switch
-                          checked={condition.value}
+                          checked={condition.value || false}
                           onCheckedChange={(checked) => {
                             updateComparisonCondition(group.id, idx, condition.field, checked);
-                            updateGroupNameFromConditions(group.id, [
-                              ...group.conditions.slice(0, idx),
-                              { field: condition.field, value: checked },
-                              ...group.conditions.slice(idx + 1)
-                            ]);
+                            
+                            // Update the group name based on the new condition value
+                            const updatedConditions = [...group.conditions];
+                            updatedConditions[idx] = { field: condition.field, value: checked };
+                            updateGroupNameFromConditions(group.id, updatedConditions);
                           }}
                         />
                         <span className="text-sm">{condition.value ? 'True' : 'False'}</span>
@@ -133,10 +134,13 @@ export function ComparisonBuilder({ className }: ComparisonBuilderProps) {
                         className="h-8 w-8"
                         onClick={() => {
                           removeComparisonCondition(group.id, idx);
-                          updateGroupNameFromConditions(group.id, [
+                          
+                          // Update the group name after removing the condition
+                          const updatedConditions = [
                             ...group.conditions.slice(0, idx),
                             ...group.conditions.slice(idx + 1)
-                          ]);
+                          ];
+                          updateGroupNameFromConditions(group.id, updatedConditions);
                         }}
                       >
                         <X className="h-4 w-4" />
