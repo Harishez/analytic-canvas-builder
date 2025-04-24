@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardContextType } from './types';
@@ -194,40 +193,6 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
     }
   };
 
-  const addCondition = () => {
-    setAnalysisConfig(prev => ({
-      ...prev,
-      conditions: [...prev.conditions, {
-        id: uuidv4(),
-        field: '',
-        operator: 'equals',
-        value: ''
-      }],
-      conditionOperators: prev.conditions.length > 0 
-        ? [...prev.conditionOperators, 'AND'] 
-        : prev.conditionOperators
-    }));
-  };
-
-  const removeCondition = (id: string) => {
-    setAnalysisConfig(prev => {
-      const index = prev.conditions.findIndex(c => c.id === id);
-      if (index === -1) return prev;
-
-      const newConditions = prev.conditions.filter(c => c.id !== id);
-      const newOperators = [
-        ...prev.conditionOperators.slice(0, index > 0 ? index - 1 : 0),
-        ...prev.conditionOperators.slice(index)
-      ];
-
-      return {
-        ...prev,
-        conditions: newConditions,
-        conditionOperators: newOperators
-      };
-    });
-  };
-
   const updateConditionOperator = (index: number, operator: 'AND' | 'OR') => {
     console.log(`Updating condition operator at index ${index} to ${operator}`);
     setAnalysisConfig(prev => {
@@ -250,7 +215,9 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
     fields,
     analysisConfig,
     ...metricsDimensions,
-    ...conditions,
+    addCondition: conditions.addCondition,
+    removeCondition: conditions.removeCondition,
+    updateCondition: conditions.updateCondition,
     ...comparisonGroups,
     setVisualizationType,
     setAggregationType,
@@ -268,7 +235,7 @@ export function DashboardProvider({ children, initialData = [] }: { children: Re
       updateRawData(initialData);
     }
   }, [initialData]);
-  
+
   return (
     <DashboardContext.Provider value={contextValue}>
       {children}

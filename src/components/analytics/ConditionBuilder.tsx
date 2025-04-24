@@ -65,7 +65,7 @@ export function ConditionBuilder({ className }: ConditionBuilderProps) {
                   <Select>
                     <select 
                       value={condition.field}
-                      onChange={(e) => updateCondition(condition.id, { field: e.target.value })}
+                      onChange={(e) => updateCondition(condition.id, e.target.value, condition.operator, condition.value)}
                       className="w-full"
                     >
                       <option value="" disabled>Select field</option>
@@ -82,7 +82,7 @@ export function ConditionBuilder({ className }: ConditionBuilderProps) {
                   <Select>
                     <select
                       value={condition.operator}
-                      onChange={(e) => updateCondition(condition.id, { operator: e.target.value as OperatorType })}
+                      onChange={(e) => updateCondition(condition.id, condition.field, e.target.value, condition.value)}
                       className="w-full"
                     >
                       <option value="" disabled>Select operator</option>
@@ -98,7 +98,7 @@ export function ConditionBuilder({ className }: ConditionBuilderProps) {
                 <div className="flex-1 min-w-[150px]">
                   <Input
                     value={condition.value}
-                    onChange={(e) => updateCondition(condition.id, { value: e.target.value })}
+                    onChange={(e) => updateCondition(condition.id, condition.field, condition.operator, e.target.value)}
                     placeholder="Enter value"
                     className="w-full"
                   />

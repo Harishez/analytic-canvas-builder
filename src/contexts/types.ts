@@ -5,7 +5,8 @@ import {
   ProcessedDataItem,
   FieldItem,
   DropZoneType,
-  ComparisonGroup
+  ComparisonGroup,
+  OperatorType
 } from '@/types/analytics';
 
 export interface DashboardContextType {

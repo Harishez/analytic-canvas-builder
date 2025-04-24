@@ -1,6 +1,6 @@
 
 import { v4 as uuidv4 } from 'uuid';
-import { AnalysisConfig, FilterCondition } from '@/types/analytics';
+import { AnalysisConfig, FilterCondition, OperatorType } from '@/types/analytics';
 
 export function useConditions(config: AnalysisConfig, setConfig: (config: AnalysisConfig) => void) {
   const addCondition = () => {
@@ -13,15 +13,19 @@ export function useConditions(config: AnalysisConfig, setConfig: (config: Analys
     
     setConfig({
       ...config,
-      conditions: [...config.conditions, newCondition]
+      conditions: [...config.conditions, newCondition],
+      conditionOperators: config.conditions.length > 0 
+        ? [...config.conditionOperators, 'AND'] 
+        : config.conditionOperators
     });
   };
 
-  const updateCondition = (id: string, updates: Partial<FilterCondition>) => {
+  // Updated to match the interface in DashboardContextType
+  const updateCondition = (id: string, field: string, operator: string, value: any) => {
     setConfig({
       ...config,
       conditions: config.conditions.map(c => 
-        c.id === id ? { ...c, ...updates } : c
+        c.id === id ? { ...c, field, operator: operator as OperatorType, value } : c
       )
     });
   };
